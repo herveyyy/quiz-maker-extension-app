@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Quiz Generator Extension Debug</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background: linear-gradient(135deg, #fef3c7, #fed7aa);
+            }
+            .debug-info {
+                background: white;
+                padding: 20px;
+                border-radius: 10px;
+                margin: 20px 0;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .status {
+                padding: 10px;
+                border-radius: 5px;
+                margin: 10px 0;
+            }
+            .success {
+                background: #d1fae5;
+                color: #065f46;
+            }
+            .error {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+            .warning {
+                background: #fef3c7;
+                color: #92400e;
+            }
+            .info {
+                background: #dbeafe;
+                color: #1e40af;
+            }
+            button {
+                background: #f97316;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:hover {
+                background: #ea580c;
+            }
+            button:disabled {
+                background: #9ca3af;
+                cursor: not-allowed;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🤖 Quiz Generator Extension Debug</h1>
+
+        <div class="debug-info">
+            <h2>Extension Status</h2>
+            <div id="extension-status" class="status info">
+                Checking extension status...
+            </div>
+            <div id="api-status" class="status info">
+                Checking API connection...
+            </div>
+            <div id="build-status" class="status info">
+                Checking build status...
+            </div>
+        </div>
+
+        <div class="debug-info">
+            <h2>Test Actions</h2>
+            <button onclick="testExtension()">Test Extension Load</button>
+            <button onclick="testAPI()">Test Gemini API</button>
+            <button onclick="testFileUpload()">Test File Upload</button>
+            <button onclick="openExtension()">Open Extension</button>
+        </div>
+
+        <div class="debug-info">
+            <h2>Debug Information</h2>
+            <div id="debug-output"></div>
+        </div>
+
+        <script>
+            function log(message, type = "info") {
+                const output = document.getElementById("debug-output");
+                const div = document.createElement("div");
+                div.className = `status ${type}`;
+                div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                output.appendChild(div);
+            }
+
+            function updateStatus(elementId, message, type = "info") {
+                const element = document.getElementById(elementId);
+                element.textContent = message;
+                element.className = `status ${type}`;
+            }
+
+            async function testExtension() {
+                log("Testing extension load...", "info");
+
+                try {
+                    // Check if we're in a Chrome extension context
+                    if (typeof chrome !== "undefined" && chrome.runtime) {
+                        updateStatus(
+                            "extension-status",
+                            "✅ Extension context detected",
+                            "success"
+                        );
+                        log("Extension context: Available", "success");
+                    } else {
+                        updateStatus(
+                            "extension-status",
+                            "❌ Not in extension context",
+                            "error"
+                        );
+                        log("Extension context: Not available", "error");
+                    }
+                } catch (error) {
+                    updateStatus(
+                        "extension-status",
+                        "❌ Extension test failed",
+                        "error"
+                    );
+                    log(`Extension test error: ${error.message}`, "error");
+                }
+            }
+
+            async function testAPI() {
+                log("Testing Gemini API...", "info");
+
+                try {
+                    // Test the API configuration
+                    const response = await fetch(
+                        "https://generativelanguage.googleapis.com/v1beta/models",
+                        {
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                        }
+                    );
+
+                    if (response.ok) {
+                        updateStatus(
+                            "api-status",
+                            "✅ Gemini API accessible",
+                            "success"
+                        );
+                        log("Gemini API: Accessible", "success");
+                    } else {
+                        updateStatus(
+                            "api-status",
+                            "❌ Gemini API not accessible",
+                            "error"
+                        );
+                        log(`Gemini API error: ${response.status}`, "error");
+                    }
+                } catch (error) {
+                    updateStatus("api-status", "❌ API test failed", "error");
+                    log(`API test error: ${error.message}`, "error");
+                }
+            }
+
+            function testFileUpload() {
+                log("Testing file upload functionality...", "info");
+
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".pdf,.doc,.docx,.txt";
+
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        log(
+                            `File selected: ${file.name} (${file.size} bytes)`,
+                            "success"
+                        );
+                        log(`File type: ${file.type}`, "info");
+                    }
+                };
+
+                input.click();
+            }
+
+            function openExtension() {
+                log("Opening extension...", "info");
+
+                if (typeof chrome !== "undefined" && chrome.runtime) {
+                    try {
+                        chrome.runtime.openOptionsPage();
+                        log("Extension options page opened", "success");
+                    } catch (error) {
+                        log(
+                            `Failed to open extension: ${error.message}`,
+                            "error"
+                        );
+                    }
+                } else {
+                    log(
+                        "Not in extension context - cannot open extension",
+                        "warning"
+                    );
+                }
+            }
+
+            // Auto-run tests on load
+            window.onload = () => {
+                log("Debug page loaded", "info");
+                testExtension();
+                testAPI();
+            };
+        </script>
+    </body>
+</html>

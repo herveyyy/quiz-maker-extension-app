@@ -1,0 +1,1 @@
+export { default as QuizGenerator } from './QuizGenerator/QuizGenerator';
